@@ -1,19 +1,13 @@
-from weka.classifiers import Classifier
-from weka.classifiers import Evaluation
-from weka.core.dataset import Instance
-
-import javabridge
 from weka.core.classes import Random
-
-
+from weka.classifiers import Evaluation
+from weka.classifiers import Classifier
 from ClassifierExecutor import ClassifierExecutor
+import javabridge
 
-
-class CVParameterSelectionExecutor(ClassifierExecutor):
-    def __init__(self, classifier):
+class KFoldClassifierExecutor(ClassifierExecutor):
+    def __init__(self,classifier):
         ClassifierExecutor.__init__()
         self.classifier = classifier
-        pass
 
 
     def execute(self,featureInclusion, kFold):
@@ -52,11 +46,4 @@ class CVParameterSelectionExecutor(ClassifierExecutor):
         eval.crossvalidate_model(cvParameterSelection, self.instances, kFold, Random(1))
 
         return eval.percent_correct()
-
-
-
-
-
-
-
 
