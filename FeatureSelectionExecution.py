@@ -19,7 +19,12 @@ class FeatureSelectionExecution:
 
 
     def executeAll(self):
-        pass
+        self.executeFullFeaturesWithNoFilters()
+        self.executeWithNoFilter()
+        self.executeFullFeaturesNormalized()
+        self.executeWithNormalization()
+        self.executeFullFeaturesZScore()
+        self.executeWithZScore()
 
     def executeWithNoFilter(self):
         print('executeWithNoFilter')

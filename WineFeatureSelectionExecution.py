@@ -3,15 +3,15 @@ from weka.classifiers import Classifier
 from FeatureSelectionExecution import FeatureSelectionExecution
 
 
-class AutosFeatureSelectionExecution(FeatureSelectionExecution):
+class WineFeatureSelectionExecution(FeatureSelectionExecution):
     def __init__(self, features):
         FeatureSelectionExecution.__init__()
-        self.databaseName = "autos.arff"
+        self.databaseName = "wine.arff"
         self.features = features
         self.runtime = 50
         self.limit = 10
         self.mr = 0.01
-        self.ibk = Classifier(classname="Lweka/classifiers/lazy/IBK",ckargs={'-K':1})
+        self.ibk = Classifier(classname="Lweka/classifiers.lazy.IBK",ckargs={'-K':1})
 
 
     def executeAll(self):
@@ -22,8 +22,7 @@ class AutosFeatureSelectionExecution(FeatureSelectionExecution):
 
 if __name__ == '__main__':
     features = {True , True , True , True , True , True , True , True ,
-                True , True , True , True , True , True , True , True ,
-                True , True ,
+                True , True , True , True , True , True , True , True , True , True ,
                 True , True , True , True , True , True , True}
-    fs = AutosFeatureSelectionExecution(features)
+    fs = WineFeatureSelectionExecution(features)
     fs.executeAll()
