@@ -1,6 +1,15 @@
 # CHA_ABC_PY
 
 Clinical Health Analysis CA2
+main: cha_main
+
+
+
+
+
+
+
+
 
 python call java function
 useful link
