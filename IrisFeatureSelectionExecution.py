@@ -11,9 +11,8 @@ class IrisFeatureSelectionExecution(FeatureSelectionExecution):
         self.runtime = 20
         self.limit = 6
         self.mr = 0.1
-        self.ibk = Classifier(classname="Lweka/classifiers/lazy/IBK",ckargs={'-K':1})
         FeatureSelectionExecution.__init__(self,self.databaseName,self.features,self.runtime,
-                                           self.limit,self.mr,self.ibk)
+                                           self.limit,self.mr)
 
 
     def executeAll(self):

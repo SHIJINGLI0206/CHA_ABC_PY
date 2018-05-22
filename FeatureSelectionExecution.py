@@ -4,18 +4,24 @@ from FeatureSelection import FeatureSelection
 
 
 class FeatureSelectionExecution:
-    def __init__(self, databaseName, features, runtime, limit, mr, classifier):
+    def __init__(self, databaseName, features, runtime, limit, mr):
+        self.databaseName = databaseName
+        self.features = features
         self.KFOLD = 10
         self.replaceMissingValues = None
         self.zscore = 0
         self.normalize = 0
+        self.classifier = None
         self.executor = None
-        self.featureSelection = None
-        self.features = features
         self.runtime = runtime
         self.limit = limit
         self.mr = mr
-        self.databaseName = databaseName
+
+        self.featureSelection = None
+
+
+
+
 
 
     def executeAll(self):

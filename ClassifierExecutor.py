@@ -6,6 +6,7 @@ from weka.core.converters import Loader,load_any_file
 import javabridge
 import weka.core.jvm as jvm
 from abc import ABC, abstractmethod
+from weka.classifiers import Evaluation
 
 
 
