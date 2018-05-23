@@ -1,8 +1,7 @@
 # CHA_ABC_PY
 
-Clinical Health Analysis CA2
+Clinical Health Analysis CA2 \
 main: cha_main
-
 
 
 
@@ -14,9 +13,9 @@ main: cha_main
 python call java function
 useful link
 1.
-https://pythonhosted.org/javabridge/highlevel.html
+    https://pythonhosted.org/javabridge/highlevel.html
 2.
-https://github.com/fracpete/python-weka-wrapper3-examples
+    https://github.com/fracpete/python-weka-wrapper3-examples
 3.
 https://github.com/chrisspen/weka
 4.

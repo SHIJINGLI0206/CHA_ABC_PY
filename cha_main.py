@@ -16,8 +16,10 @@ from scipy.io import arff
 from io import StringIO
 from weka.core.classes import Random
 import numpy as np
-import random
+from random import random
 import arff
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import KFold
 
 class PerturbationStrategy(Enum):
     USE_MR = 1
@@ -28,7 +30,7 @@ class CHA():
     def __init__(self):
         self.features = {True, True, True, True}
         self.featureSize = 0
-        self.databaseName = "../dataset/iris.arff"
+        self.databaseName = "dataset/iris.arff"
         self.runtime = 20
         self.limit = 6
         self.mr = 0.1
@@ -75,10 +77,10 @@ class CHA():
         #self.originalInstances = data
         #self.instances = Instances.copy_instances(self.originalInstances)
         #return self.originalInstances.num_attributes - 1
-        ds = arff.load(open('../dataset/iris.arff', 'r'))
+        ds = arff.load(open(self.databaseName, 'r'))
         self.data = np.array(ds['data'])
-        self.featureSize = data.shape[1] - 1
-        return data.shape[0]
+        self.featureSize = self.data.shape[1] - 1
+        return self.data.shape[0]
 
 
 
@@ -96,7 +98,7 @@ class CHA():
 
 
         eval = Evaluation(self.instances)
-        eval.crossvalidate_model(cvParameterSelection,self.instances,kFold,Random(1))
+        eval.crossvalidate_model(cvParameterSelection,self.instances,kFold,random())
 
         return eval.percent_correct()
 
@@ -200,13 +202,13 @@ class CHA():
         while 1:
             times += 1
             if self.perturbation == PerturbationStrategy.CHANGE_ONE_FEATURE:
-                index = round(Random(1) * (self.featureSize - 1))
+                index = round(random() * (self.featureSize - 1))
                 if features[index] is False:
                     nrFeatures += 1
                     features[index] = True
             elif self.perturbation == PerturbationStrategy.USE_MR:
                 for i in range(0,self.featureSize):
-                    if Random(1) < self.mr:
+                    if random() < self.mr:
                         if features[i] == False:
                             nrFeatures += 1
                             features[i] = True
@@ -272,15 +274,18 @@ class CHA():
 
     def calculateFitness(self,featureInclusion):
         deletedFeatures = 0
+
+
+        data = self.data
         for i in range(0,len(featureInclusion)):
             if featureInclusion[i] == False:
-                data = np.delete(self.data,np.s_[i],1)
+                data = np.delete(data,np.s_[i-deletedFeatures],1)
                 #self.instances.deleteAttributeAt( i - deletedFeatures)
                 deletedFeatures += 1
 
-        sz = len(data)
-        X = data[:, :sz-1]
-        y = data[:, sz-1:]
+        rows, cols = data.shape
+        X = data[:, :cols-1]
+        y = data[:, cols-1:]
         y = y.ravel()
         kf = KFold(n_splits=10)
         for train_index, test_index in kf.split(X):
