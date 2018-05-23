@@ -17,6 +17,7 @@ from io import StringIO
 from weka.core.classes import Random
 import numpy as np
 import random
+import arff
 
 class PerturbationStrategy(Enum):
     USE_MR = 1
@@ -26,6 +27,7 @@ class PerturbationStrategy(Enum):
 class CHA():
     def __init__(self):
         self.features = {True, True, True, True}
+        self.featureSize = 0
         self.databaseName = "../dataset/iris.arff"
         self.runtime = 20
         self.limit = 6
@@ -46,6 +48,7 @@ class CHA():
             self.perturbation = PerturbationStrategy.CHANGE_ONE_FEATURE
 
         self.states = 0
+        self.data = None
 
 
     def loadFeatures(self,filename,filter):
@@ -65,29 +68,19 @@ class CHA():
         return self.originalInstances.num_attributes() - 1
 
 
-    def loadFeatures(self,filename):
-        f = Filter()
-        return self.loadFeatures(filename,f)
-
-        if 0:
-            with open(self.databaseName) as my_file:
-                data = my_file.read()
-                f = StringIO(data)
-                d, meta = arff.loadarff(f)
-
     def loadFeatures(self):
         #self.instances = self.originalInstances
-        loader = Loader("weka.core.converters.ArffLoader")
-        data = loader.load_file(self.databaseName)
-        self.originalInstances = data
-        self.instances = Instances.copy_instances(self.originalInstances)
-        return self.originalInstances.num_attributes() - 1
+        #loader = Loader("weka.core.converters.ArffLoader")
+        #data = loader.load_file(self.databaseName)
+        #self.originalInstances = data
+        #self.instances = Instances.copy_instances(self.originalInstances)
+        #return self.originalInstances.num_attributes - 1
+        ds = arff.load(open('../dataset/iris.arff', 'r'))
+        self.data = np.array(ds['data'])
+        self.featureSize = data.shape[1] - 1
+        return data.shape[0]
 
 
-    def getFeaturesSize(self):
-        if self.originalInstances is None:
-            return -1
-        return self.originalInstances.num_attributes() - 1
 
     def executeKFoldClassifier(self,featureInclusion, kFold):
         deleteFeatures = 0
@@ -95,11 +88,11 @@ class CHA():
             if featureInclusion[i]:
                 self.instances.deleteAttributeAt(i - deleteFeatures)
                 deleteFeatures += 1
-        self.instances.setClassIndex(self.instances.numAttributes() - 1)
+        self.instances.setClassIndex(self.instances.numAttributes - 1)
 
-        cvParameterSelection = javabridge.make_instance("Lweka/classifiers/meta/CVParameterSelection","()V")
+        cvParameterSelection = javabridge.make_instance("weka/classifiers/meta/CVParameterSelection","()V")
         javabridge.call(cvParameterSelection, "setNumFolds", "(I)V", kFold)
-        javabridge.call(cvParameterSelection,"buildClassifier(Lweka/core/Instances)V",self.instances)
+        javabridge.call(cvParameterSelection,"buildClassifier(weka/core/Instances)V",self.instances)
 
 
         eval = Evaluation(self.instances)
@@ -115,6 +108,7 @@ class CHA():
                 self.instances.deleteAttributeAt( i - deletedFeatures)
                 deletedFeatures += 1
 
+        '''
         self.instances.setClassIndex(classIndex)
 
         cvParameterSelection = javabridge.make_instance("Lweka/classifiers/meta/CVParameterSelection","()V")
@@ -124,7 +118,7 @@ class CHA():
         eval = Evaluation(self.instances)
         eval.crossvalidate_model(cvParameterSelection, self.instances, kFold, Random(1))
 
-        return eval.percent_correct()
+        return eval.percent_correct()'''
 
 
 
@@ -205,12 +199,12 @@ class CHA():
         modifedFoodSource = None
         while 1:
             times += 1
-            if self.perturbation == PerturbationStrategy.PerturbationStrategy.CHANGE_ONE_FEATURE:
+            if self.perturbation == PerturbationStrategy.CHANGE_ONE_FEATURE:
                 index = round(Random(1) * (self.featureSize - 1))
                 if features[index] is False:
                     nrFeatures += 1
                     features[index] = True
-            elif self.perturbation == PerturbationStrategy.PerturbationStrategy.USE_MR:
+            elif self.perturbation == PerturbationStrategy.USE_MR:
                 for i in range(0,self.featureSize):
                     if Random(1) < self.mr:
                         if features[i] == False:
@@ -248,9 +242,6 @@ class CHA():
                 self.neighbors.add(modifedFoodSource)
         return True
 
-
-
-
     def createScoutBee(self):
         features = np.array(len(self.featureSize))
         foodSource = None
@@ -279,26 +270,32 @@ class CHA():
     def markAbandonsFoodSource(self,foodSource):
         self.abandoned.add(foodSource)
 
-    def calculateFitness(self,features):
-        pass
+    def calculateFitness(self,featureInclusion):
+        deletedFeatures = 0
+        for i in range(0,len(featureInclusion)):
+            if featureInclusion[i] == False:
+                data = np.delete(self.data,np.s_[i],1)
+                #self.instances.deleteAttributeAt( i - deletedFeatures)
+                deletedFeatures += 1
 
-    def setExecutor(self,executor):
-        pass
+        sz = len(data)
+        X = data[:, :sz-1]
+        y = data[:, sz-1:]
+        y = y.ravel()
+        kf = KFold(n_splits=10)
+        for train_index, test_index in kf.split(X):
+            X_train, X_test = X[train_index], X[test_index]
+            y_train, y_test = y[train_index], y[test_index]
+        n = KNeighborsClassifier(n_neighbors=3)
+        n.fit(X_train, y_train)
 
-    def logFeatureSelectionInit(self,runtime,limit, mr, perturbation,nrFeature):
-        print('Feature Selection START --------')
-        print("Runtime [" + runtime + "], Limit [" + limit +
-              "], MR [" + mr + "], perturbation [" + perturbation + "]" )
+        score = n.score(X_test, y_test)
+        return score
 
-    def logBestSolutionAndExecutionTime(self,t):
-        print("Best bestFoodSource" )
-        print("Executedo em " + t + " percorrendo " + self.states + " states ")
-        print("Feature Selection END -------")
 
     def executeFeatureSelection(self):
         self.visitedFoodSources = set()
         self.states = 0
-        self.logFeatureSelectionInit(self.runtime,self.limit,self.mr,self.perturbation,0)
         time = datetime.now()
         self.initializeFoodSource()
         print('init time: ',datetime.now() - time)
@@ -312,7 +309,6 @@ class CHA():
 
     def runCHA(self):
         self.loadFeatures()
-        self.executeKFoldClassifier(self.features,self.KFOLD)
         self.executeFeatureSelection()
 
 
