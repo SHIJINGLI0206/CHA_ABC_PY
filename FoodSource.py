@@ -1,11 +1,11 @@
 import numpy as np
 
 class FoodSource():
-    def __init__(self,featureAInclusion, fitness,nrFeatures):
+    def __init__(self,featureAInclusion, fitness=0,nrFeatures=0):
         self.featureInclusion = featureAInclusion
         self.fitness = fitness
-        self.limit = nrFeatures
-        self.nrFeatures  = 0
+        self.limit = 0
+        self.nrFeatures  = nrFeatures
 
 
     def getFeatureInclusion(self):

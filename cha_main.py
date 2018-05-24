@@ -228,7 +228,7 @@ class CHA():
             self.states += 1
             fitness = self.calculateFitness(features)
             modifedFoodSource.setFitness(fitness)
-            modifedFoodSource.setNrFeature(nrFeatures)
+            modifedFoodSource.setNrFeatures(nrFeatures)
             if foodSource.getFitness() > fitness or \
                     (fitness == foodSource.getFitness() and nrFeatures > foodSource.getNrFeatures()):
                 foodSource.incrementLimit()
@@ -246,7 +246,6 @@ class CHA():
 
     def createScoutBee(self):
         features = np.array(len(self.featureSize))
-        foodSource = None
         nrFeatures = 0
         for j in range(0,self.featureSize):
             inclusio = random.r.choice([True,False])
@@ -275,12 +274,10 @@ class CHA():
     def calculateFitness(self,featureInclusion):
         deletedFeatures = 0
 
-
         data = self.data
         for i in range(0,len(featureInclusion)):
             if featureInclusion[i] == False:
                 data = np.delete(data,np.s_[i-deletedFeatures],1)
-                #self.instances.deleteAttributeAt( i - deletedFeatures)
                 deletedFeatures += 1
 
         rows, cols = data.shape
@@ -310,7 +307,14 @@ class CHA():
             self.sendScoutBeesAndRemoveAbandonsFoodSource()
 
         time = (datetime.now() - time) / 60000
+        self.logBestSolutionAndTime(time)
         self.states = 0
+
+    def logBestSolutionAndTime(self,t):
+        print('Time: ',t)
+        print('Best ', self.bestFoodSource.getFeatureInclusion())
+        print('Feature selection End.')
+
 
     def runCHA(self):
         self.loadFeatures()
