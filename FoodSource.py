@@ -5,7 +5,37 @@ class FoodSource():
         self.featureInclusion = featureAInclusion
         self.fitness = fitness
         self.limit = 0
-        self.nrFeatures  = nrFeatures
+        self.nrFeatures = nrFeatures
+
+
+    def __repr__(self):
+        return "FoodSource (featureAInclusion,fitness,nrFeatures): " \
+               "(%s,%s,%s)" % (self.featureInclusion,self.nrFeatures,self.fitness)
+
+    def __eq__(self, other):
+        eq = False
+        if other.nrFeatures == self.nrFeatures:
+            eq = True
+        return eq
+
+    def __hash__(self):
+        return hash(self.__repr__())
+
+    def __cmp__(self, other):
+        res = self.fitness - other.fitness
+        if res < 0:
+            return -1
+        elif res > 0:
+            return 1
+        else:
+            return 0
+
+    def __le__(self, other):
+        return (self.fitness <= other.fitness)
+
+    def __ge__(self, other):
+        return (self.fitness >= other.fitness)
+
 
 
     def getFeatureInclusion(self):

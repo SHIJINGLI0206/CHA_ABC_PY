@@ -14,9 +14,9 @@ from enum import Enum
 from FoodSource import FoodSource
 from scipy.io import arff
 from io import StringIO
-from weka.core.classes import Random
+
 import numpy as np
-from random import random
+import random
 import arff
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import KFold
@@ -30,7 +30,7 @@ class CHA():
     def __init__(self):
         self.features = {True, True, True, True}
         self.featureSize = 0
-        self.databaseName = "dataset/iris.arff"
+        self.databaseName = "dataset/segment.arff"
         self.runtime = 20
         self.limit = 6
         self.mr = 0.1
@@ -164,6 +164,10 @@ class CHA():
             self.sendBee(fs)
 
         # remove all markedToRemoved
+        for mtr in self.markedToRemoved:
+            if mtr in self.foodSources:
+                self.foodSources.remove(mtr)
+
         for n in self.neighbors:
             self.foodSources.add(n)
 
@@ -172,6 +176,7 @@ class CHA():
         print('SendOnlookerBees')
         self.markedToRemoved = set()
         self.neighbors = set()
+
 
         min = 0
         range = 0
@@ -183,12 +188,15 @@ class CHA():
 
         for fs in self.foodSources:
             prob = (fs.getFitness()-min)/range
-            if randint(0,1) < prob:
+            if random.random() < prob:
                 self.sendBee(fs)
             else:
                 fs.incrementLimit()
 
-        self.foodSources.clear()
+        for mtr in self.markedToRemoved:
+            if mtr in self.foodSources:
+                self.foodSources.remove(mtr)
+
         for n in self.neighbors:
             self.foodSources.add(n)
 
@@ -202,22 +210,22 @@ class CHA():
         while 1:
             times += 1
             if self.perturbation == PerturbationStrategy.CHANGE_ONE_FEATURE:
-                index = round(random() * (self.featureSize - 1))
+                index = round(random.random() * (self.featureSize - 1))
                 if features[index] is False:
                     nrFeatures += 1
                     features[index] = True
             elif self.perturbation == PerturbationStrategy.USE_MR:
                 for i in range(0,self.featureSize):
-                    if random() < self.mr:
+                    if random.random() < self.mr:
                         if features[i] == False:
                             nrFeatures += 1
                             features[i] = True
 
             modifedFoodSource = FoodSource(features)
-            if modifedFoodSource not in self.foodSources and \
+            if (modifedFoodSource not in self.foodSources and \
                             modifedFoodSource not in self.neighbors and \
                             modifedFoodSource not in self.abandoned and \
-                            modifedFoodSource not in self.visitedFoodSources and \
+                            modifedFoodSource not in self.visitedFoodSources) or \
                             times > self.featureSize:
                 break
 
@@ -235,20 +243,21 @@ class CHA():
                 if foodSource.getLimit() >= self.limit:
                     self.markAbandonsFoodSource(foodSource)
                     self.createScoutBee()
-                    self.visitedFoodSources.add(modifedFoodSource)
                 self.visitedFoodSources.add(modifedFoodSource)
             else:
                 if fitness > self.bestFitness or (fitness == self.bestFitness and nrFeatures < self.bestFoodSource.getNrFeatures()):
-                    self.bestFoodSource = FoodSource(modifedFoodSource)
+                    self.bestFoodSource = FoodSource(modifedFoodSource.getFeatureInclusion(),
+                                                     modifedFoodSource.getFitness(),
+                                                     modifedFoodSource.getNrFeatures())
                     self.bestFitness = fitness
                 self.neighbors.add(modifedFoodSource)
         return True
 
     def createScoutBee(self):
-        features = np.array(len(self.featureSize))
+        features = np.zeros(self.featureSize)
         nrFeatures = 0
         for j in range(0,self.featureSize):
-            inclusio = random.r.choice([True,False])
+            inclusio = bool(random.getrandbits(1))
             if inclusio:
                 nrFeatures += 1
             features[j] = inclusio
@@ -256,15 +265,19 @@ class CHA():
 
         curFitness = self.calculateFitness(features)
         foodSource = FoodSource(features,curFitness,nrFeatures)
-        if foodSource not in self.foodSources or \
-                        foodSource not in self.neighbors or \
-                        foodSource not in self.abandoned or \
+        if foodSource not in self.foodSources and \
+                        foodSource not in self.neighbors and \
+                        foodSource not in self.abandoned and \
                         foodSource not in self.visitedFoodSources:
             self.states += 1
             self.scouts.add(foodSource)
 
     def sendScoutBeesAndRemoveAbandonsFoodSource(self):
-        self.foodSources.clear()
+        #remove abandoned
+        for abd in self.abandoned:
+            if abd in self.foodSources:
+                self.foodSources.remove(abd)
+
         for s in self.scouts:
             self.foodSources.add(s)
 
